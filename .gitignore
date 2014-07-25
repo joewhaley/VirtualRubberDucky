@@ -1,3 +1,5 @@
 *.suo
 /RubberDucky/obj
 /RubberDucky/bin
+/QRDumper/obj
+/QRDumper/bin
