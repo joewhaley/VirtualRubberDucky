@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
+using ZXing;
 
 namespace RubberDucky
 {
@@ -27,13 +28,50 @@ namespace RubberDucky
             scriptPath = null;
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            NativeMethods.RegisterHotKey(Handle, GetHashCode(), NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT, VirtualKeyCode.VK_P);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+
+            if (m.Msg == NativeMethods.WM_HOTKEY)
+            {
+                NativeMethods.RectStruct r;
+                if (selectedWindowHandle == IntPtr.Zero || !NativeMethods.GetWindowRect(selectedWindowHandle, out r))
+                {
+                    selectedWindowHandle = FindVMwareViewWindow();
+                    if (selectedWindowHandle == IntPtr.Zero)
+                        selectedWindowHandle = FindRDPWindow();
+                }
+                inputSimulator_Click(this, null);
+            }
+        }
+
+        private void formClosing(object sender, FormClosingEventArgs e)
+        {
+            NativeMethods.UnregisterHotKey(Handle, GetHashCode());
+        }
+
         IntPtr FindVMwareViewWindow()
         {
             Process[] processes = Process.GetProcessesByName("VMWARE-VIEW");
             foreach (var p in processes)
             {
                 if (p.MainWindowHandle != IntPtr.Zero)
-                    return p.MainWindowHandle;
+                {
+                    var sb = new StringBuilder(256);
+                    if (NativeMethods.GetClassName(p.MainWindowHandle, sb, sb.Capacity) != 0)
+                    {
+                        if (String.Equals(sb.ToString(), "#32770"))
+                        {
+                            return p.MainWindowHandle;
+                        }
+                    }
+                }
             }
             return IntPtr.Zero;
         }
@@ -54,6 +92,8 @@ namespace RubberDucky
                 scriptFileNameLabel.Text = System.IO.Path.GetFileName(value);
             }
         }
+
+        private const int WM_SETREDRAW = 0x000B;
 
         private IntPtr _selectedWindowHandle;
         private IntPtr selectedWindowHandle
@@ -158,27 +198,37 @@ namespace RubberDucky
 
             script.sim.Mouse.MoveMouseToPositionOnVirtualDesktop(x * 65535.0 / maxX, y * 65535.0 / maxY);
             NativeMethods.SetForegroundWindow(selectedWindowHandle);
-            //script.sim.Mouse.LeftButtonClick();
+            script.sim.Mouse.LeftButtonClick();
 
+            bool stealthMode = this.stealthCheckBox.Checked;
             outputTextBox.Clear();
             inputSimulatorButton.Enabled = false;
             Task.Run(() =>
             {
+                if (stealthMode)
+                {
+                    NativeMethods.SendMessage(selectedWindowHandle, WM_SETREDRAW, false, 0);
+                }
+
                 try
                 {
                     script.Run(ProgressDelegate);
                 }
                 catch (Exception exception)
                 {
-                    Invoke((MethodInvoker)delegate
-                    {
-                        outputTextBox.AppendText(exception.ToString());
-                    });
+                    ProgressDelegate(exception.ToString());
                 }
                 Invoke((MethodInvoker)delegate
                 {
                     inputSimulatorButton.Enabled = true;
                 });
+                if (stealthMode)
+                {
+                    System.Threading.Thread.Sleep(500);
+                    NativeMethods.InvalidateRect(selectedWindowHandle, IntPtr.Zero, true);
+                    NativeMethods.SendMessage(selectedWindowHandle, WM_SETREDRAW, true, 0);
+                    NativeMethods.InvalidateRect(selectedWindowHandle, IntPtr.Zero, true);
+                }
             });
         }
 
@@ -321,6 +371,107 @@ namespace RubberDucky
             {
                 scriptPath = openFileDialog.FileName;
             }
+        }
+
+        int SnarfPollingTime = 10;
+
+        private void snarfButtonClicked(object sender, EventArgs e)
+        {
+            if (saveFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+            snarfDataButton.Enabled = false;
+            // Start data snarfer thread.
+            Task.Run(() =>
+            {
+                try
+                {
+                    using (System.IO.Stream outStream = saveFileDialog.OpenFile())
+                    {
+                        var sim = new InputSimulator();
+                        UInt64 bytes = 0;
+                        uint expectedFrameNumber = 0;
+                        int retries = 0;
+                        for (uint loopIterations = 0; ; ++loopIterations)
+                        {
+                            NativeMethods.SetForegroundWindow(selectedWindowHandle);
+                            Result result = ScreenScraper.ReadQRCode(selectedWindowHandle);
+                            if (result == null)
+                            {
+                                // No QR code (yet), keep waiting.
+                                if ((++retries % 10) == 0)
+                                {
+                                    // Regenerate QR code.
+                                    sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_R);
+                                }
+                                else
+                                {
+                                    System.Threading.Thread.Sleep(SnarfPollingTime);
+                                }
+                                continue;
+                            }
+                            byte[] b = Convert.FromBase64String(result.Text);
+                            if (b.Length < 4)
+                            {
+                                ProgressDelegate(String.Format("Message too short: {0}", b.Length));
+                                sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_Q);
+                                break;
+                            }
+                            uint actualFrameNumber =
+                                (uint)(b[0] & 0xFF) |
+                                (uint)(b[1] & 0xFF) << 8 |
+                                (uint)(b[2] & 0xFF) << 16;
+                            if (actualFrameNumber + 1 == expectedFrameNumber)
+                            {
+                                if ((++retries % 64) != 0)
+                                {
+                                    // Previous QR code, keep waiting.
+                                    System.Threading.Thread.Sleep(SnarfPollingTime);
+                                    continue;
+                                }
+                            }
+                            if (actualFrameNumber < expectedFrameNumber)
+                            {
+                                // Dropped a keypress?
+                                sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_N);
+                                continue;
+                            }
+                            if (actualFrameNumber > expectedFrameNumber)
+                            {
+                                // Skipped a code?
+                                sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_P);
+                                continue;
+                            }
+                            if (expectedFrameNumber != actualFrameNumber)
+                            {
+                                ProgressDelegate(String.Format("Wrong frame number (expected: {0} actual: {1})", expectedFrameNumber, actualFrameNumber));
+                                sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_Q);
+                                break;
+                            }
+                            outStream.Write(b, 4, b.Length - 4);
+                            bytes += (UInt64)b.Length - 4;
+                            if ((b[3] & 1) == 0)
+                            {
+                                ProgressDelegate(String.Format("Saved {0} bytes", bytes));
+                                outStream.Close();
+                                break;
+                            }
+                            sim.Keyboard.KeyPress(DirectInputKeyCode.DIK_N);
+                            ++expectedFrameNumber;
+                            retries = 0;
+                        }
+                    }
+                }
+                catch (Exception exception)
+                {
+                    ProgressDelegate(exception.ToString());
+                }
+                Invoke((MethodInvoker)delegate
+                {
+                    snarfDataButton.Enabled = true;
+                });
+            });
         }
 
     }

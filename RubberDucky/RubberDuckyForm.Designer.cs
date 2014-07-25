@@ -45,6 +45,9 @@
             this.typingDelayTextBox = new System.Windows.Forms.TextBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.crossPictureBox = new System.Windows.Forms.PictureBox();
+            this.snarfDataButton = new System.Windows.Forms.Button();
+            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.stealthCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.crossPictureBox)).BeginInit();
             this.SuspendLayout();
@@ -52,7 +55,7 @@
             // inputSimulatorButton
             // 
             this.inputSimulatorButton.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.inputSimulatorButton.Location = new System.Drawing.Point(99, 212);
+            this.inputSimulatorButton.Location = new System.Drawing.Point(207, 215);
             this.inputSimulatorButton.Name = "inputSimulatorButton";
             this.inputSimulatorButton.Size = new System.Drawing.Size(85, 23);
             this.inputSimulatorButton.TabIndex = 1;
@@ -132,7 +135,7 @@
             // 
             this.useDirectInputCheckBox.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.useDirectInputCheckBox.AutoSize = true;
-            this.useDirectInputCheckBox.Location = new System.Drawing.Point(15, 116);
+            this.useDirectInputCheckBox.Location = new System.Drawing.Point(15, 104);
             this.useDirectInputCheckBox.Name = "useDirectInputCheckBox";
             this.useDirectInputCheckBox.Size = new System.Drawing.Size(126, 17);
             this.useDirectInputCheckBox.TabIndex = 19;
@@ -144,18 +147,18 @@
             this.outputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.outputTextBox.Location = new System.Drawing.Point(13, 244);
+            this.outputTextBox.Location = new System.Drawing.Point(13, 271);
             this.outputTextBox.Multiline = true;
             this.outputTextBox.Name = "outputTextBox";
             this.outputTextBox.ReadOnly = true;
             this.outputTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.outputTextBox.Size = new System.Drawing.Size(279, 123);
+            this.outputTextBox.Size = new System.Drawing.Size(279, 135);
             this.outputTextBox.TabIndex = 20;
             // 
             // delayTextBox
             // 
             this.delayTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.delayTextBox.Location = new System.Drawing.Point(15, 139);
+            this.delayTextBox.Location = new System.Drawing.Point(15, 153);
             this.delayTextBox.MaxLength = 5;
             this.delayTextBox.Name = "delayTextBox";
             this.delayTextBox.Size = new System.Drawing.Size(50, 20);
@@ -167,17 +170,17 @@
             // 
             this.delayLabel.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.delayLabel.AutoSize = true;
-            this.delayLabel.Location = new System.Drawing.Point(71, 142);
+            this.delayLabel.Location = new System.Drawing.Point(71, 156);
             this.delayLabel.Name = "delayLabel";
-            this.delayLabel.Size = new System.Drawing.Size(56, 13);
+            this.delayLabel.Size = new System.Drawing.Size(93, 13);
             this.delayLabel.TabIndex = 22;
-            this.delayLabel.Text = "Delay (ms)";
+            this.delayLabel.Text = "Default Delay (ms)";
             // 
             // typingDelayLabel
             // 
             this.typingDelayLabel.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.typingDelayLabel.AutoSize = true;
-            this.typingDelayLabel.Location = new System.Drawing.Point(71, 168);
+            this.typingDelayLabel.Location = new System.Drawing.Point(71, 182);
             this.typingDelayLabel.Name = "typingDelayLabel";
             this.typingDelayLabel.Size = new System.Drawing.Size(91, 13);
             this.typingDelayLabel.TabIndex = 24;
@@ -186,7 +189,7 @@
             // typingDelayTextBox
             // 
             this.typingDelayTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.typingDelayTextBox.Location = new System.Drawing.Point(15, 165);
+            this.typingDelayTextBox.Location = new System.Drawing.Point(15, 179);
             this.typingDelayTextBox.MaxLength = 5;
             this.typingDelayTextBox.Name = "typingDelayTextBox";
             this.typingDelayTextBox.Size = new System.Drawing.Size(50, 20);
@@ -216,11 +219,33 @@
             this.crossPictureBox.TabStop = false;
             this.crossPictureBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.crossPictureBox_MouseDown);
             // 
+            // snarfDataButton
+            // 
+            this.snarfDataButton.Location = new System.Drawing.Point(15, 215);
+            this.snarfDataButton.Name = "snarfDataButton";
+            this.snarfDataButton.Size = new System.Drawing.Size(75, 23);
+            this.snarfDataButton.TabIndex = 27;
+            this.snarfDataButton.Text = "Snarf Data";
+            this.snarfDataButton.UseVisualStyleBackColor = true;
+            this.snarfDataButton.Click += new System.EventHandler(this.snarfButtonClicked);
+            // 
+            // stealthCheckBox
+            // 
+            this.stealthCheckBox.AutoSize = true;
+            this.stealthCheckBox.Location = new System.Drawing.Point(15, 128);
+            this.stealthCheckBox.Name = "stealthCheckBox";
+            this.stealthCheckBox.Size = new System.Drawing.Size(89, 17);
+            this.stealthCheckBox.TabIndex = 28;
+            this.stealthCheckBox.Text = "Stealth Mode";
+            this.stealthCheckBox.UseVisualStyleBackColor = true;
+            // 
             // RubberDuckyForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(304, 379);
+            this.ClientSize = new System.Drawing.Size(304, 418);
+            this.Controls.Add(this.stealthCheckBox);
+            this.Controls.Add(this.snarfDataButton);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.typingDelayLabel);
             this.Controls.Add(this.typingDelayTextBox);
@@ -239,6 +264,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "RubberDuckyForm";
             this.Text = "RubberDucky";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formClosing);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.crossPictureBox)).EndInit();
             this.ResumeLayout(false);
@@ -264,6 +290,9 @@
         private System.Windows.Forms.Label typingDelayLabel;
         private System.Windows.Forms.TextBox typingDelayTextBox;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button snarfDataButton;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog;
+        private System.Windows.Forms.CheckBox stealthCheckBox;
     }
 }
 

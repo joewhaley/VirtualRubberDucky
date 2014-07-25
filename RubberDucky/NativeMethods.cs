@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using WindowsInput.Native;
 
 namespace RubberDucky
 {
@@ -192,8 +193,11 @@ namespace RubberDucky
         public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, [Out] StringBuilder lParam);
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern int SendMessage(IntPtr hWnd, Int32 wMsg, bool wParam, Int32 lParam);
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
 
         /// <summary>
         /// Translates a character to the corresponding virtual-key code and shift state for the current keyboard.
@@ -259,5 +263,17 @@ namespace RubberDucky
             /// </summary>
             MAPVK_VK_TO_VSC_EX = 0x04
         }
+
+        public static int MOD_ALT = 0x1;
+        public static int MOD_CONTROL = 0x2;
+        public static int MOD_SHIFT = 0x4;
+        public static int MOD_WIN = 0x8;
+        public static int WM_HOTKEY = 0x312;
+
+        [DllImport("user32.dll")]
+        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, VirtualKeyCode vlc);
+
+        [DllImport("user32.dll")]
+        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
     }
 }
